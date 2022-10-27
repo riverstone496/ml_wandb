@@ -108,5 +108,5 @@ if __name__=='__main__':
             axes[i, j].set_xlabel('interval')
             axes[i, j].set_ylabel('batch size')
 
-    plt.savefig('graph/seaborn_heatmap_list.png', dpi=600)
+    plt.savefig('graph/bs_interval.png', dpi=300)
     plt.close('all')
