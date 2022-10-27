@@ -3,17 +3,18 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 api = wandb.Api()
-interval=30
-model = 'mixer'
+interval=3
+model = 'resnet'
 optim_list = ['shampoo','kfac_mc','psgd','seng','kbfgs']
 batch_size_list = [32,128,512,2048]
-model_list = ['mixer_s16_224','mixer_b16_224','mixer_l16_224']
+
+#model_list = ['mixer_s16_224','mixer_b16_224','mixer_l16_224']
 #model_list=['vit_tiny_patch16_224','vit_small_patch16_224','vit_base_patch16_224','vit_large_patch16_224']
 #model_list=['wideresnet16','wideresnet28','wideresnet40']
-#model_list=['resnet18','resnet34','resnet50','resnet101']
+model_list=['resnet18','resnet34','resnet50','resnet101']
 
-memory_filename = './graph/mixer_memory.png'
-time_filename   = './graph/mixer_time.png'
+memory_filename = './graph/resnet_memory.png'
+time_filename   = './graph/resnet_time.png'
 
 sweep_dic={
     'resnet':'riverstone/optprofiler/hof6qhuy',
@@ -39,12 +40,12 @@ for model in model_list:
 for run in runs:
     if  run.config.get('interval') == interval and run.config.get('model') in model_list and run.config.get('batch_size') in batch_size_list:
         if run.summary.get("cuda_max_memory") == -1 or run.state!='finished' or type(run.summary.get("avg_step_time")) != float:
-            time=0
+            throughput=0
             mem=0
         else:
-            time=run.summary.get("avg_step_time")
+            throughput=run.config.get('batch_size')/run.summary.get("avg_step_time")
             mem=run.summary.get("cuda_max_memory")
-        time_batch[run.config.get('model')][run.config.get('optim')][run.config.get('batch_size')]=time
+        time_batch[run.config.get('model')][run.config.get('optim')][run.config.get('batch_size')]=throughput
         memory_batch[run.config.get('model')][run.config.get('optim')][run.config.get('batch_size')]=mem
 
 def make_graph(batch_list,filename):
@@ -71,8 +72,8 @@ def make_graph(batch_list,filename):
         ax_list[i].set_xticks([0.25,1.25,2.25,3.25]) 
         ax_list[i].set_xticklabels(batch_size_list)
         ax_list[i].set_title(model+' interval:'+str(interval))
+        ax_list[i].set_yscale('log')
     
-    plt.yscale('log')
     plt.savefig(filename)
 
 make_graph(memory_batch ,memory_filename)
