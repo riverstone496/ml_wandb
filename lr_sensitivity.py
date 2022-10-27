@@ -46,7 +46,7 @@ if __name__=='__main__':
     #optim_list=['kfac_mc']
     mlp_width = 512
     
-    fig = plt.figure(figsize=(10,3))
+    fig = plt.figure(figsize=(20,5))
     ax_list = []
     for i in range(3):
         ax = fig.add_subplot(1, 3, i+1)
@@ -64,8 +64,10 @@ if __name__=='__main__':
         ax_list[i].set_title(model)
         ax_list[i].set_xscale('log')
         ax_list[i].set_yscale('log')
+        ax_list[i].set_xlabel('learning rate')
+        ax_list[i].set_ylabel('test loss')
 
-    plt.legend()
+    plt.legend(loc='center left', bbox_to_anchor=(1., .5))
     plt.plot()
     plt.savefig(filename)
 
