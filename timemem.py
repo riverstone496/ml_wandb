@@ -87,9 +87,9 @@ if __name__=='__main__':
     #}
 
     sweep_list={
-        'riverstone/optprofiler/2dyc5upc',
-        'riverstone/optprofiler/cjzterm9',
-        'riverstone/optprofiler/fcy887tk',
+        'riverstone/optprofiler/mz4j8kqs',
+        'riverstone/optprofiler/v03bz3o4',
+        'riverstone/optprofiler/lj9re5ab',
         'riverstone/optprofiler/zmgg87bc',
         'riverstone/optprofiler/fs9juimy',
         'riverstone/optprofiler/51dt8cew',
