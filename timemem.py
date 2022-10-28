@@ -23,6 +23,16 @@ def make_dict():
                 acc_dic[model][optim][bs]=0
     return acc_dic
 
+
+def remove_zero(acc_dic):
+    for model in  model_list:
+        batchsize_list=get_batchsize_list(model)
+        for optim in optim_list:
+            for bs in batchsize_list:
+                if acc_dic[model][optim][bs]==0:
+                    acc_dic[model][optim].pop(bs)
+    return acc_dic
+
 def collect_runs(sweep_list):
     throughput_dic = make_dict()
     memory_dic = make_dict()
@@ -87,8 +97,11 @@ if __name__=='__main__':
 
     throughput_dic,memory_dic=collect_runs(sweep_list)
     #throughput_ratio_list = sgd_ratio(throughput_dic)
+    print(throughput_dic)
+    throughput_dic=remove_zero(throughput_dic)
+    memory_dic=remove_zero(memory_dic)
 
-    fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(30, 30))
+    fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(32, 10))
 
     for i in range(len(model_list)):
         model = model_list[i]
@@ -98,8 +111,8 @@ if __name__=='__main__':
             bsli=list(throughput_dic[model][optim].keys())
             thli=list(throughput_dic[model][optim].values())
             memli=list(memory_dic[model][optim].values())
-            axes[0,i].plot(bsli,thli,label=optim)
-            axes[1,i].plot(bsli,memli,label=optim)
+            axes[0,i].plot(bsli,thli,label=optim,marker='o')
+            axes[1,i].plot(bsli,memli,label=optim,marker='o')
 
             axes[0,i].set_title(model)
             axes[0,i].set_xscale('log')
@@ -107,8 +120,8 @@ if __name__=='__main__':
 
             axes[0,i].set_xlabel('batch size')
             axes[1,i].set_xlabel('batch size')
-            axes[0,i].set_ylabel('throughput')
-            axes[1,i].set_ylabel('memory')
+    axes[0,0].set_ylabel('throughput [image/s]')
+    axes[1,0].set_ylabel('memory [GB]')
     
     plt.legend(loc='center left', bbox_to_anchor=(1., .5))
     plt.plot()

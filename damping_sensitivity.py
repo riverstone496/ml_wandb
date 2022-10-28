@@ -70,6 +70,6 @@ if __name__=='__main__':
                 axes[i].set_xlabel('damping size')
                 axes[i].set_ylabel('test_loss')
     
-    plt.legend(loc='center left', bbox_to_anchor=(1., .5))
+    plt.legend(loc='center left')
     plt.plot()
     plt.savefig(filename, dpi=300)
