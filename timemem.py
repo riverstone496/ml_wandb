@@ -36,10 +36,12 @@ def collect_runs(sweep_list):
                 model_name = 'mlp_'+str(run.config.get('width'))
             else:
                 model_name = run.config.get('model')
-
             batchsize_list=get_batchsize_list(model_name)
 
-            if model_name in model_list and run.config.get('interval') == interval and run.config.get('batch_size') in batchsize_list and run.config.get('optim') in optim_list:
+            if run.config.get('interval') != interval and run.config.get('optim') != 'sgd':
+                continue
+
+            if model_name in model_list  and run.config.get('batch_size') in batchsize_list and run.config.get('optim') in optim_list:
                 if run.summary.get("cuda_max_memory") == -1 or type(run.summary.get("avg_step_time")) != float:
                     throughput=0
                     mem=0
@@ -53,6 +55,7 @@ def collect_runs(sweep_list):
     return throughput_dic,memory_dic
 
 def sgd_ratio(throughput_dic):
+    print(throughput_dic)
     throughput_ratio_dic = make_dict()
     for model in model_list:
         batchsize_list=get_batchsize_list(model)
@@ -71,19 +74,29 @@ if __name__=='__main__':
     optim_list = ['sgd','shampoo','kfac_mc','psgd','seng','kbfgs']
     batch_size_list = [32,128,512,2048]
     model_list=['mlp_128','mlp_512','mlp_2048','resnet18','wideresnet28','vit_tiny_patch16_224','mixer_b16_224']
-
     filename = './graph/thmem.png'
 
-    sweep_dic={
-        'resnet':'riverstone/optprofiler/hof6qhuy',
-        'wideresnet':'riverstone/optprofiler/88o1ai7y',
-        'vit':'riverstone/optprofiler/y2zysvr9',
-        'mixer':'riverstone/optprofiler/nfwp192i',
-        'sgd_mlp':'riverstone/optprofiler/2qyu4jk0',
-        'sgd':'riverstone/optprofiler/6enkjejo'
+    #sweep_dic={
+    #    'resnet':'riverstone/optprofiler/hof6qhuy',
+    #    'wideresnet':'riverstone/optprofiler/88o1ai7y',
+    #    'vit':'riverstone/optprofiler/y2zysvr9',
+    #    'mixer':'riverstone/optprofiler/nfwp192i',
+    #    'mlp':'riverstone/optprofiler/4pq2wjsq',
+    #    'sgd_mlp':'riverstone/optprofiler/2qyu4jk0',
+    #    'sgd':'riverstone/optprofiler/6enkjejo'
+    #}
+
+    sweep_list={
+        'riverstone/optprofiler/2dyc5upc',
+        'riverstone/optprofiler/cjzterm9',
+        'riverstone/optprofiler/fcy887tk',
+        'riverstone/optprofiler/zmgg87bc',
+        'riverstone/optprofiler/fs9juimy',
+        'riverstone/optprofiler/51dt8cew',
+        'riverstone/optprofiler/kjwxeo2i'
     }
 
-    throughput_dic,memory_dic=collect_runs(list(sweep_dic.values()))
+    throughput_dic,memory_dic=collect_runs(sweep_list)
     throughput_ratio_list = sgd_ratio(throughput_dic)
 
     fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(25, 18))
@@ -93,17 +106,17 @@ if __name__=='__main__':
         for j in range(len(optim_list)):
             optim = optim_list[j]
 
-            bsli=list(throughput_ratio_list[model][optim].keys())
-            thli=list(throughput_ratio_list[model][optim].values())
+            bsli=list(throughput_dic[model][optim].keys())
+            thli=list(throughput_dic[model][optim].values())
             memli=list(memory_dic[model][optim].values())
-            plt.plot(bsli,thli,ax=axes[i, 0])
-            plt.plot(bsli,memli,ax=axes[i, 1])
+            axes[0,i].plot(bsli,thli,label=optim)
+            axes[1,i].plot(bsli,memli,label=optim)
 
-        axes[i, 0].set_title(optim)
-        axes[i, 0].set_xlabel('batch size')
-        axes[i, 1].set_xlabel('batch size')
-        axes[i, 0].set_ylabel('SGD throughput ratio')
-        axes[i, 1].set_ylabel('memory')
+            axes[0,i].set_title(model)
+            axes[0,i].set_xlabel('batch size')
+            axes[1,i].set_xlabel('batch size')
+            axes[0,i].set_ylabel('SGD throughput ratio')
+            axes[1,i].set_ylabel('memory')
     
     plt.legend(loc='center left', bbox_to_anchor=(1., .5))
     plt.plot()
