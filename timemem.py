@@ -148,7 +148,7 @@ if __name__=='__main__':
             axes[2,i].set_xscale('log')
 
             axes[0,i].set_xlabel('batch size')
-            axes[1,i].set_xlabel('interval size')
+            axes[1,i].set_xlabel('interval')
             axes[2,i].set_xlabel('batch size')
     axes[0,0].set_ylabel('throughput [image/s]')
     axes[1,0].set_ylabel('throughput [image/s]')

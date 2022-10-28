@@ -46,14 +46,23 @@ if __name__=='__main__':
     batchsize_list = [32,512]
     damping_list = [1,1e-3,1e-6,1e-9,1e-12,1e-15]
     model_list=['mlp_512','resnet18']
-    filename = './graph/damping_loss.png'
+    filename = './graph/damping_loss_noclip.png'
 
-    sweep_list={
+    sweep_clipping_list={
         'riverstone/grad_maker/u8thipfb',
         'riverstone/grad_maker/rm35hvs9',
+        #'riverstone/grad_maker/9n9x42i8',
+        #'riverstone/grad_maker/an9vomat'
     }
 
-    damp_loss_dic=collect_runs(sweep_list)
+    sweep_noclipping_list={
+        'riverstone/grad_maker/qi8038th',
+        'riverstone/grad_maker/qp4porzm',
+        #'riverstone/grad_maker/wd7asu5o',
+        #'riverstone/grad_maker/83nitl9f'
+    }
+
+    damp_loss_dic=collect_runs(sweep_noclipping_list)
     fig, axes = plt.subplots(nrows=1, ncols=len(model_list), figsize=(10, 5))
 
     for i in range(len(model_list)):
@@ -63,7 +72,7 @@ if __name__=='__main__':
             for bs in batchsize_list:
                 dampli=list(damp_loss_dic[model][optim][bs].keys())
                 lossli=list(damp_loss_dic[model][optim][bs].values())
-                axes[i].plot(dampli,lossli,label=optim,color=col[optim],linestyle=lstyle[bs])
+                axes[i].plot(dampli,lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
                 axes[i].set_title(model)
                 axes[i].set_xscale('log')
                 axes[i].set_yscale('log')
