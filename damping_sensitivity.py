@@ -46,7 +46,7 @@ if __name__=='__main__':
     batchsize_list = [32,512]
     damping_list = [1,1e-3,1e-6,1e-9,1e-12,1e-15]
     model_list=['mlp_512','resnet18']
-    filename = './graph/damping_loss_noclip.png'
+    filename = './graph/damping_loss.png'
 
     sweep_clipping_list={
         'riverstone/grad_maker/u8thipfb',
@@ -62,22 +62,34 @@ if __name__=='__main__':
         #'riverstone/grad_maker/83nitl9f'
     }
 
-    damp_loss_dic=collect_runs(sweep_noclipping_list)
-    fig, axes = plt.subplots(nrows=1, ncols=len(model_list), figsize=(10, 5))
+    clip_loss_dic=collect_runs(sweep_clipping_list)
+    noclip_loss_dic=collect_runs(sweep_noclipping_list)
+    fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(10, 5))
 
     for i in range(len(model_list)):
         model = model_list[i]
         for j in range(len(optim_list)):
             optim = optim_list[j]
             for bs in batchsize_list:
-                dampli=list(damp_loss_dic[model][optim][bs].keys())
-                lossli=list(damp_loss_dic[model][optim][bs].values())
-                axes[i].plot(dampli,lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
-                axes[i].set_title(model)
-                axes[i].set_xscale('log')
-                axes[i].set_yscale('log')
-                axes[i].set_xlabel('damping size')
-                axes[i].set_ylabel('test_loss')
+                clip_dampli=list(clip_loss_dic[model][optim][bs].keys())
+                clip_lossli=list(clip_loss_dic[model][optim][bs].values())
+
+                noclip_dampli=list(noclip_loss_dic[model][optim][bs].keys())
+                noclip_lossli=list(noclip_loss_dic[model][optim][bs].values())
+
+                axes[0,i].plot(clip_dampli,clip_lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
+                axes[1,i].plot(noclip_dampli,noclip_lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
+
+                axes[0,i].set_title(model)
+                axes[0,i].set_xscale('log')
+                axes[0,i].set_yscale('log')
+                axes[1,i].set_xscale('log')
+                axes[1,i].set_yscale('log')
+
+                axes[0,i].set_xlabel('damping')
+                axes[1,i].set_xlabel('damping')
+                axes[0,i].set_ylabel('test_loss with clipp')
+                axes[1,i].set_ylabel('test_loss without clipp')
     
     plt.legend(loc='center left')
     plt.plot()
