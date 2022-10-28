@@ -64,7 +64,7 @@ if __name__=='__main__':
 
     clip_loss_dic=collect_runs(sweep_clipping_list)
     noclip_loss_dic=collect_runs(sweep_noclipping_list)
-    fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(10, 5))
+    fig, axes = plt.subplots(nrows=2, ncols=len(model_list), figsize=(20, 10))
 
     for i in range(len(model_list)):
         model = model_list[i]
