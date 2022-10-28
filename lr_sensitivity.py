@@ -2,7 +2,7 @@ from matplotlib.lines import lineStyles
 import wandb
 import matplotlib.pyplot as plt
 
-col = {'psgd':'r','kbfgs':'brown','kfac_mc':'green','seng':'cyan','shampoo':'purple'}
+col = {'psgd':'r','kbfgs':'brown','kfac_mc':'green','seng':'blue','shampoo':'purple'}
 lstyle = {32:'dashed',512:'solid'}
 api = wandb.Api()
 
