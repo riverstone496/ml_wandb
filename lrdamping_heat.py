@@ -1,6 +1,7 @@
 import wandb
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 
 col = {'psgd':'tab:red','kbfgs':'tab:brown','kfac_mc':'tab:green','seng':'tab:blue','shampoo':'tab:purple'}
 lstyle = {32:'dashed',512:'solid'}
@@ -14,7 +15,9 @@ def make_dict():
             for bs in batchsize_list:
                 acc_dic[model][optim][bs]={}
                 for lr in lr_list:
-                    acc_dic[model][optim][bs][lr]=np.inf
+                    acc_dic[model][optim][bs][lr]={}
+                    for damp in damping_list:
+                        acc_dic[model][optim][bs][lr][damp]=np.inf
     return acc_dic
 
 def collect_runs(sweep_list):
@@ -28,14 +31,14 @@ def collect_runs(sweep_list):
             else:
                 model_name = run.config.get('model')
 
-            if model_name in model_list  and run.config.get('batch_size') in batchsize_list and run.config.get('optim') in optim_list:
+            if model_name in model_list  and run.config.get('batch_size') in batchsize_list and run.config.get('optim') in optim_list and run.config.get('lr') in lr_list and run.config.get('damping') in damping_list:
                 if run.summary.get("cuda_max_memory") == -1 or type(run.summary.get("test_loss")) != float:
                     test_loss=np.inf
                 else:
                     test_loss=run.summary.get("test_loss")
-                cur_loss=damp_loss_dic[model_name][run.config.get('optim')][run.config.get('batch_size')][run.config.get('lr')]
+                cur_loss=damp_loss_dic[model_name][run.config.get('optim')][run.config.get('batch_size')][run.config.get('lr')][run.config.get('damping')]
                 if test_loss < cur_loss:
-                    damp_loss_dic[model_name][run.config.get('optim')][run.config.get('batch_size')][run.config.get('lr')]=test_loss
+                    damp_loss_dic[model_name][run.config.get('optim')][run.config.get('batch_size')][run.config.get('lr')][run.config.get('damping')]=test_loss
 
     print(damp_loss_dic)
     return damp_loss_dic
@@ -45,21 +48,22 @@ if __name__=='__main__':
     optim_list = ['shampoo','kfac_mc','seng','kbfgs']
     batchsize_list = [32,512]
     lr_list = [1,3e-1,1e-1,3e-2,1e-2,3e-3,1e-3]
+    damping_list = [1,1e-3,1e-6,1e-9,1e-12,1e-15]
     model_list=['mlp_512','resnet18']
     filename = './graph/lr_loss.png'
 
     sweep_clipping_list={
         'riverstone/grad_maker/u8thipfb',
         'riverstone/grad_maker/rm35hvs9',
-        'riverstone/grad_maker/9n9x42i8',
-        'riverstone/grad_maker/an9vomat'
+        #'riverstone/grad_maker/9n9x42i8',
+        #'riverstone/grad_maker/an9vomat'
     }
 
     sweep_noclipping_list={
         'riverstone/grad_maker/qi8038th',
         'riverstone/grad_maker/qp4porzm',
-        'riverstone/grad_maker/wd7asu5o',
-        'riverstone/grad_maker/83nitl9f'
+        #'riverstone/grad_maker/wd7asu5o',
+        #'riverstone/grad_maker/83nitl9f'
     }
 
     clip_loss_dic=collect_runs(sweep_clipping_list)
@@ -72,26 +76,17 @@ if __name__=='__main__':
         for j in range(len(optim_list)):
             optim = optim_list[j]
             for bs in batchsize_list:
-                clip_dampli=list(clip_loss_dic[model][optim][bs].keys())
-                clip_lossli=list(clip_loss_dic[model][optim][bs].values())
+                clip_loss=[]
+                noclip_loss=[]
 
-                noclip_dampli=list(noclip_loss_dic[model][optim][bs].keys())
-                noclip_lossli=list(noclip_loss_dic[model][optim][bs].values())
+                for lr in lr_list:
+                    clip_loss.append(clip_loss_dic[model][optim][bs][lr].values())
+                    noclip_loss.append(noclip_loss_dic[model][optim][bs][lr].values())
 
-                axes[0,i].plot(clip_dampli,clip_lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
-                axes[1,i].plot(noclip_dampli,noclip_lossli,label=optim,color=col[optim],linestyle=lstyle[bs],marker='o')
+                sns.heatmap(clip_loss,ax=axes[0, j], annot=True, cmap='hot',xticklabels=lr_list,yticklabels=damping_list,fmt= '.4g')
+                sns.heatmap(noclip_loss,ax=axes[1, j], annot=True, cmap='hot',xticklabels=lr_list,yticklabels=damping_list,fmt= '.4g')
 
-                axes[0,i].set_title(model)
-                axes[0,i].set_xscale('log')
-                axes[0,i].set_yscale('log')
-                axes[1,i].set_xscale('log')
-                axes[1,i].set_yscale('log')
 
-                axes[0,i].set_xlabel('learning rate')
-                axes[1,i].set_xlabel('learning rate')
-                axes[0,i].set_ylabel('test_loss with clipp')
-                axes[1,i].set_ylabel('test_loss without clipp')
-    
     plt.legend(loc='center left')
     plt.plot()
     plt.savefig(filename, dpi=300)

@@ -44,22 +44,22 @@ if __name__=='__main__':
     api = wandb.Api()
     optim_list = ['shampoo','kfac_mc','seng','kbfgs']
     batchsize_list = [32,512]
-    damping_list = [1,1e-3,1e-6,1e-9,1e-12,1e-15]
+    damping_list = [10,1,0.1,0.01,1e-3,1e-6,1e-9,1e-12,1e-15]
     model_list=['mlp_512','resnet18']
     filename = './graph/damping_loss.png'
 
     sweep_clipping_list={
         'riverstone/grad_maker/u8thipfb',
         'riverstone/grad_maker/rm35hvs9',
-        #'riverstone/grad_maker/9n9x42i8',
-        #'riverstone/grad_maker/an9vomat'
+        'riverstone/grad_maker/9n9x42i8',
+        'riverstone/grad_maker/an9vomat'
     }
 
     sweep_noclipping_list={
         'riverstone/grad_maker/qi8038th',
         'riverstone/grad_maker/qp4porzm',
-        #'riverstone/grad_maker/wd7asu5o',
-        #'riverstone/grad_maker/83nitl9f'
+        'riverstone/grad_maker/wd7asu5o',
+        'riverstone/grad_maker/83nitl9f'
     }
 
     clip_loss_dic=collect_runs(sweep_clipping_list)

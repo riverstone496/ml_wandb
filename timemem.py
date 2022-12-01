@@ -105,7 +105,7 @@ def sgd_ratio(throughput_dic):
 if __name__=='__main__':
     api = wandb.Api()
     fixinterval=1
-    fixbatchsize=32
+    fixbatchsize=512
     optim_list = ['sgd','shampoo','kfac_mc','psgd','seng','kbfgs']
     batch_size_list = [32,128,512,2048]
     interval_list=[1,3,10,30]
@@ -115,8 +115,8 @@ if __name__=='__main__':
         'riverstone/optprofiler/mz4j8kqs',
         'riverstone/optprofiler/v03bz3o4',
         'riverstone/optprofiler/lj9re5ab',
-        'riverstone/optprofiler/zmgg87bc',
-        'riverstone/optprofiler/fs9juimy',
+        'riverstone/optprofiler/xrflpbon',
+        'riverstone/optprofiler/n71od3fe',
         'riverstone/optprofiler/51dt8cew',
         'riverstone/optprofiler/kjwxeo2i'
     }
