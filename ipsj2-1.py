@@ -6,7 +6,7 @@ col = {'sgd':'tab:pink','psgd':'tab:red','kfac_mc':'tab:green','kfac_mc_local':'
 model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-tiny'}
 optim_dict = {'sgd':'SGD','adamw':'AdamW','psgd':'PSGD(KF)','kfac_mc':'K-FAC(global)','kfac_mc_local':'K-FAC(local)','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
 
-def make_dict():
+def make_dict(batchsize_list):
     acc_dic={}
     for optim in optim_list:
         acc_dic[optim]={}
@@ -14,9 +14,9 @@ def make_dict():
             acc_dic[optim][bs]=np.inf
     return acc_dic
 
-def collect_runs(sweep_list,metric='test_accuracy'):
-    damp_loss_dic = make_dict()
-    for sweep_name in sweep_list:
+def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
+    damp_loss_dic = make_dict(batchsize_list)
+    for sweep_name in sweep_list_mlp:
         sweep = api.sweep(sweep_name)
         runs = sweep.runs
         for run in runs:
@@ -42,11 +42,12 @@ def collect_runs(sweep_list,metric='test_accuracy'):
 if __name__=='__main__':
     api = wandb.Api()
     optim_list = ['sgd','adamw','shampoo','kfac_mc','kfac_mc_local','seng','psgd']
+    optim_list = ['sgd','adamw','shampoo','seng','psgd']
     batchsize_list = [256,512,1024,2048,4096,8192,16384]
-    model='mlp'
+    batchsize_list_vit = [64,128,256,512,1024]
     filename = './graph/ipsj2.png'
 
-    sweep_list={
+    sweep_list_mlp={
         'riverstone/criteria/spzpahql',
         'riverstone/criteria/denix8xi',
         'riverstone/optcriteria/e11b9g2v',
@@ -55,21 +56,29 @@ if __name__=='__main__':
         'riverstone/grad_maker/n727u0s3'
     }
 
-    clip_train_dic=collect_runs(sweep_list,metric='train_accuracy')
-    clip_test_dic=collect_runs(sweep_list,metric='test_accuracy')
+    sweep_list_vit={
+        'riverstone/vit_batch/9q8eq6ql',
+        'riverstone/vit_batch/zarall9n',
+        'riverstone/vit_batch/9w0fl9qv',
+        'riverstone/vit_batch/7qy5v4jk',
+        'riverstone/vit_batch/tvbsauhx'
+    }
 
+    clip_test_dic_mlp=collect_runs('mlp',sweep_list_mlp,batchsize_list,metric='test_accuracy')
+    clip_test_dic_vit=collect_runs('vit_tiny_patch16_224',sweep_list_vit,batchsize_list_vit,metric='test_accuracy')
+    
     plt.rcParams["font.size"] = 28
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 21))
 
     for j in range(len(optim_list)):
         optim = optim_list[j]
-        clip_dampli=list(clip_train_dic[optim].keys())
-        clip_lossli=list(clip_train_dic[optim].values())
-        axes[0].plot(clip_dampli,clip_lossli,label=optim_dict[optim],color=col[optim],marker='o')
-
-        clip_dampli=list(clip_test_dic[optim].keys())
-        clip_lossli=list(clip_test_dic[optim].values())
+        clip_dampli=list(clip_test_dic_vit[optim].keys())
+        clip_lossli=list(clip_test_dic_vit[optim].values())
         axes[1].plot(clip_dampli,clip_lossli,label=optim_dict[optim],color=col[optim],marker='o')
+
+        clip_dampli=list(clip_test_dic_mlp[optim].keys())
+        clip_lossli=list(clip_test_dic_mlp[optim].values())
+        axes[0].plot(clip_dampli,clip_lossli,label=optim_dict[optim],color=col[optim],marker='o')
 
         axes[0].set_xscale('log',base=2)
         axes[1].set_xscale('log',base=2)
@@ -79,9 +88,10 @@ if __name__=='__main__':
 
         axes[0].set_xlabel('Batch size')
         axes[1].set_xlabel('Batch size')
-        axes[0].set_ylabel('Train Error rate')
+        axes[0].set_ylabel('Test Error rate')
         axes[1].set_ylabel('Test Error rate')
         axes[0].set_title('MLP')
+        axes[1].set_title('ViT-T')
     
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
     plt.plot()

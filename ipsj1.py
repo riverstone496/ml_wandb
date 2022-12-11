@@ -1,11 +1,10 @@
 import wandb
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import curve_fit
 
 col = {'sgd':'tab:pink','psgd':'tab:red','kfac_mc':'tab:green','seng':'tab:blue','shampoo':'tab:purple','skfac_mc':'tab:brown','smw_ngd':'tab:cyan'}
 model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-tiny'}
-optim_dict = {'sgd':'SGD','psgd':'PSGD(KF)','kfac_mc':'K-FAC(1-mc)','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
+optim_dict = {'sgd':'SGD','psgd':'PSGD(KF)','kfac_mc':'K-FAC','skfac_mc':'SK-FAC','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
 
 def get_batchsize_list(model):
     if model == 'vit_tiny_patch16_224':
@@ -80,30 +79,36 @@ def sgd_ratio(throughput_dic,cutone=False):
     throughput_ratio_dic = make_dict()
     for model in model_list:
         batchsize_list=get_batchsize_list(model)
+
+        if model == 'vit_tiny_patch16_224':
+            fixinterval=1
+        else:
+            fixinterval=1
+            
         for optim in optim_list:
             for bs in batchsize_list:
-                if throughput_dic[model]['sgd'][1][bs]!=0:
-                    throughput_ratio_dic[model][optim][1][bs] = throughput_dic[model][optim][1][bs]/throughput_dic[model]['sgd'][1][bs]
-                    if cutone and throughput_ratio_dic[model][optim][1][bs]>=1:
-                        throughput_ratio_dic[model][optim][1][bs]=1
+                if throughput_dic[model]['sgd'][fixinterval][bs]!=0:
+                    throughput_ratio_dic[model][optim][fixinterval][bs] = throughput_dic[model][optim][fixinterval][bs]/throughput_dic[model]['sgd'][fixinterval][bs]
+                    if cutone and throughput_ratio_dic[model][optim][fixinterval][bs]>=1:
+                        throughput_ratio_dic[model][optim][fixinterval][bs]=1
                 else:
-                    throughput_ratio_dic[model][optim][1][bs] = 0
+                    throughput_ratio_dic[model][optim][fixinterval][bs] = 0
 
     return throughput_ratio_dic
 
 if __name__=='__main__':
     api = wandb.Api()
-    fixinterval=1
+    fixinterval=10
     fixbatchsize=128
-    optim_list = ['sgd','shampoo','kfac_mc','skfac_mc','psgd','seng','smw_ngd']
+    optim_list = ['sgd','shampoo','skfac_mc','kfac_mc','psgd','seng','smw_ngd']
     batch_size_list = [32,128,512,2048]
     interval_list=[1,3,10,30,100]
     model_list=['mlp','cnn','resnet18','vit_tiny_patch16_224']
     filename = './graph/ipsj1.png'
     sweep_list={
         'riverstone/optprofiler/vtvb4lpb',
-        'riverstone/optprofiler/ulw4fmpv',#後で下と入れ替える
-        #https://wandb.ai/riverstone/optprofiler/sweeps/ehvm0mls?workspace=user-riverstone,
+        #'riverstone/optprofiler/ulw4fmpv',#後で下と入れ替える
+        'riverstone/optprofiler/ehvm0mls',
         'riverstone/optprofiler/ltxv1app',
         'riverstone/optprofiler/51dt8cew',
     }
@@ -116,14 +121,18 @@ if __name__=='__main__':
     throughput_ratio_list=remove_zero(throughput_ratio_list)
     memory_ratio_dic=remove_zero(memory_ratio_dic)
 
-    plt.rcParams["font.size"] = 20
-    dpi=300
-    fig, axes = plt.subplots(nrows=3, ncols=len(model_list), figsize=(28, 18))
+    plt.rcParams["font.size"] = 26
+    fig, axes = plt.subplots(nrows=3, ncols=len(model_list), figsize=(28, 20))
 
     for i in range(len(model_list)):
         model = model_list[i]
         for j in range(len(optim_list)):
             optim = optim_list[j]
+
+            if model == 'vit_tiny_patch16_224':
+                fixinterval=1
+            else:
+                fixinterval=1
 
             bsli =list(throughput_ratio_list[model][optim][fixinterval].keys())
             bsthli =list(throughput_ratio_list[model][optim][fixinterval].values())
@@ -151,6 +160,6 @@ if __name__=='__main__':
     axes[2,0].set_ylabel('Throughput vs SGD')
     axes[1,0].set_ylabel('Memory vs SGD')
     
-    plt.legend(loc='upper center', bbox_to_anchor=(-1, -0.2), ncol=8)
+    plt.legend(loc='upper center', bbox_to_anchor=(-1, -0.2), ncol=4)
     plt.plot()
-    plt.savefig(filename,dpi=500,bbox_inches='tight',pad_inches=0.1)
+    plt.savefig(filename,dpi=80,bbox_inches='tight',pad_inches=0.1)
