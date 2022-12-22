@@ -2,9 +2,9 @@ import wandb
 import matplotlib.pyplot as plt
 import numpy as np
 
-col = {'sgd':'tab:pink','psgd':'tab:red','kfac_mc':'tab:green','kfac_mc_local':'tab:cyan','seng':'tab:blue','shampoo':'tab:purple','adamw':'tab:brown'}
+col = {'sgd':'tab:pink','psgd':'tab:red','kfac_mc':'tab:green','kfac_mc_local':'tab:cyan','seng':'tab:blue','shampoo':'tab:purple','adamw':'tab:brown','foof':'tab:olive'}
 model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-tiny'}
-optim_dict = {'sgd':'SGD','adamw':'AdamW','psgd':'PSGD(KF)','kfac_mc':'K-FAC(global)','kfac_mc_local':'K-FAC(local)','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
+optim_dict = {'sgd':'SGD','adamw':'AdamW','psgd':'PSGD(KF)','kfac_mc':'K-FAC(global)','kfac_mc_local':'K-FAC(local)','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG','foof':'FOOF'}
 
 def make_dict(batchsize_list):
     acc_dic={}
@@ -12,6 +12,13 @@ def make_dict(batchsize_list):
         acc_dic[optim]={}
         for bs in batchsize_list:
             acc_dic[optim][bs]=np.inf
+    return acc_dic
+
+def remove_dict(acc_dic,batchsize_list):
+    for optim in optim_list:
+        for bs in batchsize_list:
+            if acc_dic[optim][bs]==1:
+                acc_dic[optim].pop(bs)
     return acc_dic
 
 def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
@@ -41,8 +48,7 @@ def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
 
 if __name__=='__main__':
     api = wandb.Api()
-    optim_list = ['sgd','adamw','shampoo','kfac_mc','kfac_mc_local','seng','psgd']
-    optim_list = ['sgd','adamw','shampoo','seng','psgd']
+    optim_list = ['sgd','adamw','shampoo','kfac_mc','kfac_mc_local','seng','psgd','foof']
     batchsize_list = [256,512,1024,2048,4096,8192,16384]
     batchsize_list_vit = [64,128,256,512,1024]
     filename = './graph/ipsj2.png'
@@ -53,7 +59,8 @@ if __name__=='__main__':
         'riverstone/optcriteria/e11b9g2v',
         'riverstone/grad_maker/5sweoxrv',
         'riverstone/grad_maker/xb0y5kd5',
-        'riverstone/grad_maker/n727u0s3'
+        'riverstone/grad_maker/n727u0s3',
+        'riverstone/grad_maker/yqid66vz'
     }
 
     sweep_list_vit={
@@ -66,7 +73,8 @@ if __name__=='__main__':
 
     clip_test_dic_mlp=collect_runs('mlp',sweep_list_mlp,batchsize_list,metric='test_accuracy')
     clip_test_dic_vit=collect_runs('vit_tiny_patch16_224',sweep_list_vit,batchsize_list_vit,metric='test_accuracy')
-    
+    clip_test_dic_vit=remove_dict(clip_test_dic_vit,batchsize_list_vit)
+
     plt.rcParams["font.size"] = 28
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 21))
 
