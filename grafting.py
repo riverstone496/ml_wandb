@@ -4,7 +4,7 @@ import numpy as np
 
 col = {'AllSGD':'tab:pink','SGDNorm':'tab:cyan','SGDDirection':'tab:green','None':'tab:red'}
 model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-tiny'}
-optim_dict = {'sgd':'SGD','adamw':'AdamW','psgd':'PSGD(KF)','kfac_mc':'K-FAC(global)','kfac_mc_local':'K-FAC(local)','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
+optim_dict = {'sgd':'SGD','adamw':'AdamW','psgd':'PSGD(KF)','kfac_mc':'K-FAC(global)','foof':'FOOF','skfac_mc':'SK-FAC(1-mc)','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
 grafting_dict = {'None':"solid",'SGDNorm':"dashdot",'SGDDirection':"dashed",'AllSGD':"solid"}
 
 def make_dict(epoch_list):
@@ -42,10 +42,10 @@ def collect_runs(model,bs,sweep_list_mlp,epoch_list,metric='max_test_accuracy'):
                 if 1-test_accuracy < cur_loss:
                     damp_loss_dic[run.config.get('optim')][str(run.config.get('grafting'))][run.config.get('epochs')]=1-test_accuracy
 
-                if run.config.get('optim')=='kfac_mc' and run.config.get('ema_decay')==-1:
-                    cur_loss=damp_loss_dic['kfac_mc_local'][str(run.config.get('grafting'))][run.config.get('epochs')]
-                    if 1-test_accuracy < cur_loss:
-                        damp_loss_dic['kfac_mc_local'][str(run.config.get('grafting'))][run.config.get('epochs')]=1-test_accuracy
+                # if run.config.get('optim')=='kfac_mc' and run.config.get('ema_decay')==-1:
+                #     cur_loss=damp_loss_dic['kfac_mc_local'][str(run.config.get('grafting'))][run.config.get('epochs')]
+                #     if 1-test_accuracy < cur_loss:
+                #         damp_loss_dic['kfac_mc_local'][str(run.config.get('grafting'))][run.config.get('epochs')]=1-test_accuracy
     print(damp_loss_dic)
     return damp_loss_dic
 
@@ -62,7 +62,7 @@ def plot(ax,output_dic,optim):
 
 if __name__=='__main__':
     api = wandb.Api()
-    optim_list = ['sgd','shampoo','psgd','kfac_mc','kfac_mc_local']
+    optim_list = ['sgd','shampoo','psgd','kfac_mc','foof']
     epoch_list = [5,10,20,40]
     epoch_list_resnet = [25,50,100,200]
     filename = './graph/grafting.png'
@@ -72,21 +72,22 @@ if __name__=='__main__':
         'riverstone/grafting/yvvvpeqq',
         'riverstone/grafting/6uu1uny6',
         'riverstone/grafting/u7szv79y',
-        'riverstone/grafting/gvi0d9s3'
+        'riverstone/grafting/gvi0d9s3',
+        'riverstone/grafting/xr4k3q2n'
     }
 
     sweep_list_resnet={
         'riverstone/grafting/cf10xbtw',
         'riverstone/grafting/rgdrwvna',
         'riverstone/grafting/oriqygl6',
-        'riverstone/grafting/iqc818x5',
-        'riverstone/grad_maker/pmjvkc1u'
+        'riverstone/grafting/s45umgc1'
     }
 
     sweep_list_vit={
         'riverstone/grafting/0fq4zsll',
         'riverstone/grafting/9t8riv33',
         'riverstone/grafting/l8skh2i3',
+        'riverstone/grafting/x54o7iz8'
     }
 
     test_dic_mlp_256=collect_runs('mlp',256,sweep_list_mlp,epoch_list,metric='test_accuracy')

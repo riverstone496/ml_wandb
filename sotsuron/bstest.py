@@ -21,7 +21,7 @@ def remove_dict(acc_dic,batchsize_list):
                 acc_dic[optim].pop(bs)
     return acc_dic
 
-def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
+def collect_runs(model,sweep_list_mlp,batchsize_list,metric='train_accuracy'):
     damp_loss_dic = make_dict(batchsize_list)
     for sweep_name in sweep_list_mlp:
         sweep = api.sweep(sweep_name)
@@ -38,7 +38,7 @@ def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
                 if 1-test_accuracy < cur_loss:
                     damp_loss_dic[run.config.get('optim')][run.config.get('batch_size')]=1-test_accuracy
 
-                if run.config.get('optim')=='kfac_mc' and run.config.get('ema_decay')==-1:
+                if run.config.get('optim')=='kfac_mc' and (run.config.get('ema_decay')==-1 or  run.config.get('ema_decay')==1):
                     cur_loss=damp_loss_dic['kfac_mc_local'][run.config.get('batch_size')]
                     if 1-test_accuracy < cur_loss:
                         damp_loss_dic['kfac_mc_local'][run.config.get('batch_size')]=1-test_accuracy
@@ -48,10 +48,10 @@ def collect_runs(model,sweep_list_mlp,batchsize_list,metric='test_accuracy'):
 
 if __name__=='__main__':
     api = wandb.Api()
-    optim_list = ['sgd','adamw','shampoo','kfac_mc','kfac_mc_local','seng','psgd','foof']
+    optim_list = ['sgd','adamw','shampoo','kfac_mc_local','kfac_mc','seng','psgd','foof']
     batchsize_list = [256,512,1024,2048,4096,8192,16384]
     batchsize_list_vit = [64,128,256,512,1024]
-    filename = './graph/ipsj2.png'
+    filename = './graph/bstest.png'
 
     sweep_list_mlp={
         'riverstone/criteria/spzpahql',
@@ -60,7 +60,10 @@ if __name__=='__main__':
         'riverstone/grad_maker/5sweoxrv',
         'riverstone/grad_maker/xb0y5kd5',
         'riverstone/grad_maker/n727u0s3',
-        'riverstone/grad_maker/yqid66vz'
+        'riverstone/grad_maker/yqid66vz',
+        'riverstone/grad_maker/8ufrctyz',
+        'riverstone/grad_maker/p0s014j8',
+        'riverstone/criteria/denix8xi'
     }
 
     sweep_list_vit={
@@ -68,20 +71,38 @@ if __name__=='__main__':
         'riverstone/vit_batch/zarall9n',
         'riverstone/vit_batch/9w0fl9qv',
         'riverstone/vit_batch/7qy5v4jk',
-        'riverstone/vit_batch/tvbsauhx'
+        'riverstone/vit_batch/tvbsauhx',
+        'riverstone/vit_batch/qsdfynar',
+        'riverstone/vit_batch/cpzqkh7f',
+        'riverstone/vit_batch/npgaogw4',
+        'riverstone/vit_batch/ltjonitr'
     }
 
-    clip_test_dic_mlp=collect_runs('mlp',sweep_list_mlp,batchsize_list,metric='test_accuracy')
-    clip_test_dic_vit=collect_runs('vit_tiny_patch16_224',sweep_list_vit,batchsize_list_vit,metric='test_accuracy')
+    sweep_list_res={
+        'riverstone/res_batch/lle7ao87',
+        'riverstone/res_batch/swtoakmv',
+        'riverstone/res_batch/fl4iqmyk',
+        'riverstone/res_batch/fnetnblk',
+        'riverstone/res_batch/2mro7urd',
+    }
+
+    metric='test_accuracy'
+    clip_test_dic_mlp=collect_runs('mlp',sweep_list_mlp,batchsize_list,metric=metric)
+    clip_test_dic_res=collect_runs('resnet18',sweep_list_res,batchsize_list,metric=metric)
+    clip_test_dic_vit=collect_runs('vit_tiny_patch16_224',sweep_list_vit,batchsize_list_vit,metric=metric)
     clip_test_dic_vit=remove_dict(clip_test_dic_vit,batchsize_list_vit)
 
     plt.rcParams["font.size"] = 28
-    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(10, 21))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(30, 10))
 
     for j in range(len(optim_list)):
         optim = optim_list[j]
         clip_dampli=list(clip_test_dic_vit[optim].keys())
         clip_lossli=list(clip_test_dic_vit[optim].values())
+        axes[2].plot(clip_dampli,clip_lossli,label=optim_dict[optim],color=col[optim],marker='o')
+
+        clip_dampli=list(clip_test_dic_res[optim].keys())
+        clip_lossli=list(clip_test_dic_res[optim].values())
         axes[1].plot(clip_dampli,clip_lossli,label=optim_dict[optim],color=col[optim],marker='o')
 
         clip_dampli=list(clip_test_dic_mlp[optim].keys())
@@ -90,17 +111,21 @@ if __name__=='__main__':
 
         axes[0].set_xscale('log',base=2)
         axes[1].set_xscale('log',base=2)
+        axes[2].set_xscale('log',base=2)
         
         axes[0].set_yscale('log',base=2)
         axes[1].set_yscale('log',base=2)
+        axes[2].set_yscale('log',base=2)
 
         axes[0].set_xlabel('Batch size')
         axes[1].set_xlabel('Batch size')
+        axes[2].set_xlabel('Batch size')
         axes[0].set_ylabel('Test Error rate')
         axes[1].set_ylabel('Test Error rate')
         axes[0].set_title('MLP')
-        axes[1].set_title('ViT-T')
+        axes[1].set_title('Resnet18')
+        axes[2].set_title('ViT-T')
     
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.1, -0.1), ncol=4)
     plt.plot()
     plt.savefig(filename,dpi=80,bbox_inches='tight',pad_inches=0.1)
