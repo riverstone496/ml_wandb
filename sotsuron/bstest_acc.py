@@ -11,13 +11,13 @@ def make_dict(batchsize_list):
     for optim in optim_list:
         acc_dic[optim]={}
         for bs in batchsize_list:
-            acc_dic[optim][bs]=np.inf
+            acc_dic[optim][bs]=0
     return acc_dic
 
 def remove_dict(acc_dic,batchsize_list):
     for optim in optim_list:
         for bs in batchsize_list:
-            if acc_dic[optim][bs]==1:
+            if acc_dic[optim][bs]<80:
                 acc_dic[optim].pop(bs)
     return acc_dic
 
@@ -32,16 +32,16 @@ def collect_runs(model,sweep_list_mlp,batchsize_list,metric='train_accuracy'):
                 if run.summary.get("cuda_max_memory") == -1 or type(run.summary.get(metric)) != float:
                     test_accuracy=0
                 else:
-                    test_accuracy=run.summary.get(metric)/100
+                    test_accuracy=run.summary.get(metric)
 
                 cur_loss=damp_loss_dic[run.config.get('optim')][run.config.get('batch_size')]
-                if 1-test_accuracy < cur_loss:
-                    damp_loss_dic[run.config.get('optim')][run.config.get('batch_size')]=1-test_accuracy
+                if test_accuracy > cur_loss:
+                    damp_loss_dic[run.config.get('optim')][run.config.get('batch_size')]=test_accuracy
 
                 if run.config.get('optim')=='kfac_mc' and (run.config.get('ema_decay')==-1 or  run.config.get('ema_decay')==1):
                     cur_loss=damp_loss_dic['kfac_mc_local'][run.config.get('batch_size')]
-                    if 1-test_accuracy < cur_loss:
-                        damp_loss_dic['kfac_mc_local'][run.config.get('batch_size')]=1-test_accuracy
+                    if test_accuracy > cur_loss:
+                        damp_loss_dic['kfac_mc_local'][run.config.get('batch_size')]=test_accuracy
 
     print(damp_loss_dic)
     return damp_loss_dic
@@ -50,8 +50,9 @@ if __name__=='__main__':
     api = wandb.Api()
     optim_list = ['sgd','adamw','shampoo','kfac_mc_local','kfac_mc','seng','psgd','foof']
     batchsize_list = [256,512,1024,2048,4096,8192,16384]
+    batchsize_list_res = [128,256,512,1024,2048,4096]
     batchsize_list_vit = [64,128,256,512,1024]
-    filename = './graph/bstrain.png'
+    filename = './sotsuron/graph/bstestacc.png'
 
     sweep_list_mlp={
         'riverstone/criteria/spzpahql',
@@ -85,17 +86,19 @@ if __name__=='__main__':
         'riverstone/res_batch/fnetnblk',
         'riverstone/res_batch/2mro7urd',
         'riverstone/res_batch/xzh4rrxh',
-        'riverstone/res_batch/yapj6sw7'
+        'riverstone/res_batch/zlh21342',
+        'riverstone/res_batch/18fm6e4e'
     }
 
-    metric='train_accuracy_all'
+    metric='max_test_accuracy'
     clip_test_dic_mlp=collect_runs('mlp',sweep_list_mlp,batchsize_list,metric=metric)
-    clip_test_dic_res=collect_runs('resnet18',sweep_list_res,batchsize_list,metric=metric)
+    clip_test_dic_res=collect_runs('resnet18',sweep_list_res,batchsize_list_res,metric=metric)
     clip_test_dic_vit=collect_runs('vit_tiny_patch16_224',sweep_list_vit,batchsize_list_vit,metric=metric)
+    clip_test_dic_res=remove_dict(clip_test_dic_res,batchsize_list_res)
     clip_test_dic_vit=remove_dict(clip_test_dic_vit,batchsize_list_vit)
 
     plt.rcParams["font.size"] = 28
-    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(33, 10))
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(30, 10))
 
     for j in range(len(optim_list)):
         optim = optim_list[j]
@@ -115,16 +118,16 @@ if __name__=='__main__':
         axes[1].set_xscale('log',base=2)
         axes[2].set_xscale('log',base=2)
         
-        axes[0].set_yscale('log',base=2)
-        axes[1].set_yscale('log',base=2)
-        axes[2].set_yscale('log',base=2)
+        #axes[0].set_yscale('log',base=2)
+        #axes[1].set_yscale('log',base=2)
+        #axes[2].set_yscale('log',base=2)
 
         axes[0].set_xlabel('Batch size')
         axes[1].set_xlabel('Batch size')
         axes[2].set_xlabel('Batch size')
-        axes[0].set_ylabel('Test Error rate')
-        axes[1].set_ylabel('Test Error rate')
-        axes[2].set_ylabel('Test Error rate')
+        axes[0].set_ylabel('Test Acc rate')
+        axes[1].set_ylabel('Test Acc rate')
+        axes[2].set_ylabel('Test Acc rate')
         axes[0].set_title('MLP')
         axes[1].set_title('Resnet18')
         axes[2].set_title('ViT-T')
