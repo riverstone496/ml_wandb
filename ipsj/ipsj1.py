@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 col = {'sgd':'tab:pink','psgd':'tab:red','kfac_mc':'tab:green','seng':'tab:blue','shampoo':'tab:purple','skfac_mc':'tab:brown','smw_ngd':'tab:cyan'}
-model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-tiny'}
+model_name_dic = {'mlp':'MLP','cnn':'CNN','resnet18':'Resnet18','vit_tiny_patch16_224':'ViT-T'}
 optim_dict = {'sgd':'SGD','psgd':'PSGD(KF)','kfac_mc':'K-FAC','skfac_mc':'SK-FAC','shampoo':'Shampoo','seng':'SENG','smw_ngd':'SMW-NG'}
 
 def get_batchsize_list(model):

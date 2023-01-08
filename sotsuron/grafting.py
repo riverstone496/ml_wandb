@@ -131,6 +131,6 @@ if __name__=='__main__':
         axes[j][3].set_title('Resnet(bs=1024)')
         axes[j][4].set_title('ViT')
 
-    plt.legend(loc='upper center', bbox_to_anchor=(0, -0.2), ncol=3)
+    plt.legend(loc='upper right', bbox_to_anchor=(0, -0.2), ncol=6, fontsize=40)
     plt.plot()
     plt.savefig(filename,dpi=80,bbox_inches='tight',pad_inches=0.1)
